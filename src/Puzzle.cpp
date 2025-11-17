@@ -18,11 +18,13 @@ Puzzle::Puzzle(json demo) {
 
     walls = new int[width * height]();
     distances = new double[width * height]();
+    inPath = new bool[width * height]();
 
     std::vector<int> wallVector = demo["walls"];
 
     for (int i = 0; i < wallVector.size(); i++) {
        	walls[i] = wallVector[i];
+        inPath[i] = false;
     }
 }
 
@@ -34,7 +36,6 @@ int Puzzle::GetBoundedIndex(int x, int y) {
 
 bool Puzzle::IsWall(int x, int y) {
 	arrayAccesses++;
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	int index = GetBoundedIndex(x, y);
 	if (index == -1)
 		return true;
@@ -61,9 +62,10 @@ void* Puzzle::CheapestPathBruteForce(void* args) {
 }
 
 double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int current, double cost) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	// Optimization: Give up on paths that are more expensive than the current best path
-	// if (bestSoFar != -1 && cost > bestSoFar)
-	// 	return -1;
+	if (bestSoFar != -1 && cost > bestSoFar)
+		return -1;
 	if (current == GetBoundedIndex(endx, endy)) {
 		if (bestSoFar == -1 || cost < bestSoFar)
 			bestSoFar = cost;
@@ -80,7 +82,9 @@ double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int c
 		int n = GetBoundedIndex(nx, ny);
 		if (!IsWall(nx, ny)) {
 			if (!explored[n]) {
+				inPath[GetBoundedIndex(nx, ny)] = true;
 				double newSolution = CheapestPathBruteForceRecursive(explored, n, cost + NEIGHBOR_COSTS[i]);
+				inPath[GetBoundedIndex(nx, ny)] = false;
 				if (newSolution != -1 && newSolution < bestSolution || bestSolution == -1)
 					bestSolution = newSolution;
 			}

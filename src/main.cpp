@@ -29,7 +29,7 @@ int main() {
 		return 0;
 	}
 
-	window = SDL_CreateWindow("SDLRPG", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("Pathfinding", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
 	if (window == NULL) {
 		printf("Could not create window: %s\n", SDL_GetError());
 		SDL_Quit();
@@ -56,7 +56,7 @@ int main() {
 
 	puzzle = new Puzzle(demo);
 
-	pthread_create(&puzzleThread, NULL, Puzzle::CheapestPathGreedy, puzzle);
+	pthread_create(&puzzleThread, NULL, Puzzle::CheapestPathBruteForce, puzzle);
 
 	emscripten_set_main_loop(mainloop, 0, false);
 
@@ -93,8 +93,6 @@ static void mainloop() {
 			int tileBorderSize = borderSize;
 			int tileX = originX + x * tileSize;
 			int tileY = originY + y * tileSize;
-			SDL_Rect outerRect = {tileX, tileY, tileSize, tileSize};
-			SDL_Rect innerRect = {tileX + tileBorderSize, tileY + tileBorderSize, tileSize - tileBorderSize * 2, tileSize - tileBorderSize * 2};
 
 			SDL_Color color;
 	 		SDL_Color borderColor = {16, 16, 16, 255};
@@ -108,9 +106,16 @@ static void mainloop() {
 			}
 			else {
 				color = cheapColor;
-				borderColor = pathColor;
 				text << std::setprecision(3) << puzzle->distances[puzzle->GetBoundedIndex(x, y)];
 			}
+
+			if (puzzle->inPath[puzzle->GetBoundedIndex(x, y)]) {
+				borderColor = pathColor;
+				tileBorderSize = borderSizeFocused;
+			}
+
+			SDL_Rect outerRect = {tileX, tileY, tileSize, tileSize};
+			SDL_Rect innerRect = {tileX + tileBorderSize, tileY + tileBorderSize, tileSize - tileBorderSize * 2, tileSize - tileBorderSize * 2};
 
 			SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.b, borderColor.g, borderColor.a);
 			SDL_RenderFillRect(renderer, &outerRect);

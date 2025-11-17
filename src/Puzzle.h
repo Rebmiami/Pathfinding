@@ -22,6 +22,7 @@ struct Puzzle {
 
     int* walls;
     double* distances;
+    bool* inPath;
     double bestSoFar = -1;
 
     int arrayAccesses = 0;

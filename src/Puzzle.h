@@ -24,11 +24,17 @@ struct Puzzle {
     int endx;
     int endy;
 
+    bool done = false;
     int* walls;
     double* distances;
     bool* highlighted;
     double bestSoFar = -1;
-    std::stack<int>* path;
+    int* path;
+    int pathSize = 0;
+
+    bool updatePathSync;
+    int* pathSync;
+    int pathSizeSync = 0;
 
     int arrayAccesses = 0;
     // Used for animation
@@ -47,4 +53,5 @@ struct Puzzle {
     // Returns the length of the shortest path, calculated using the greedy approach
     static void* CheapestPathGreedy(void* arg);
     void PrintDistances();
+    void ShowShortestPath();
 };

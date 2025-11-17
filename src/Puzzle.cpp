@@ -20,7 +20,8 @@ Puzzle::Puzzle(json demo) {
     walls = new int[width * height]();
     distances = new double[width * height]();
     highlighted = new bool[width * height]();
-    path = new std::stack<int>();
+    path = new int[width * height]();
+    pathSync = new int[width * height]();
 
     std::vector<int> wallVector = demo["walls"];
 
@@ -62,13 +63,26 @@ void* Puzzle::CheapestPathBruteForce(void* args) {
 	for (int i = 0; i < puzzle->width * puzzle->height; i++) {
 		explored.push_back(false);
 	}
+	puzzle->path[puzzle->pathSize] = puzzle->GetBoundedIndex(puzzle->startx, puzzle->starty);
+	puzzle->pathSize++;
 
 	puzzle->finalCost = puzzle->CheapestPathBruteForceRecursive(explored, puzzle->GetBoundedIndex(puzzle->startx, puzzle->starty), 0);
+	puzzle->ShowShortestPath();
+	puzzle->done = true;
 	return 0;
 }
 
 double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int current, double cost) {
+	highlighted[current] = true;
+	if (updatePathSync) {
+		pathSizeSync = pathSize;
+		for (int i = 0; i < pathSize; i++) {
+			pathSync[i] = path[i];
+		}
+		updatePathSync = false;
+	}
 	std::this_thread::sleep_for(delayTime);
+	highlighted[current] = false;
 	if (distances[current] == -1 || cost < distances[current])
 		distances[current] = cost;
 	// Optimization: Give up on paths that are more expensive than the current best path
@@ -90,9 +104,10 @@ double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int c
 		int n = GetBoundedIndex(nx, ny);
 		if (!IsWall(nx, ny)) {
 			if (!explored[n]) {
-				highlighted[current] = true;
+				path[pathSize] = n;
+				pathSize++;
 				double newSolution = CheapestPathBruteForceRecursive(explored, n, cost + NEIGHBOR_COSTS[i]);
-				highlighted[current] = false;
+				pathSize--;
 				if (newSolution != -1 && newSolution < bestSolution || bestSolution == -1)
 					bestSolution = newSolution;
 			}
@@ -146,14 +161,47 @@ void* Puzzle::CheapestPathGreedy(void* args) {
 	}
 
 	puzzle->finalCost = puzzle->distances[puzzle->GetBoundedIndex(puzzle->endx, puzzle->endy)];
+	puzzle->ShowShortestPath();
+	puzzle->done = true;
 	return 0;
 }
 
 void Puzzle::PrintDistances() {
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
-			std::cout << std::setprecision(2) << distances[GetBoundedIndex(x, y)] << "\t";
+			std::cout << std::setprecision(1) << distances[GetBoundedIndex(x, y)] << "\t";
 		}
 		std::cout << "\n";
 	}
+}
+
+void Puzzle::ShowShortestPath() {
+	int current = GetBoundedIndex(endx, endy);
+	int next = -1;
+	double nextLowestCost = -1;
+	pathSync[0] = current;
+	pathSizeSync = 1;
+	while (current != GetBoundedIndex(startx, starty)) {
+		for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+			int x = GetIndexX(current);
+			int y = GetIndexY(current);
+			int nx = x + NEIGHBOR_OFFSET_X[i];
+			int ny = y + NEIGHBOR_OFFSET_Y[i];
+			int n = GetBoundedIndex(nx, ny);
+
+			if (n != -1 && walls[n] != -1) {
+				if (nextLowestCost == -1 || distances[n] < nextLowestCost) {
+					next = n;
+					nextLowestCost = distances[n];
+				}
+			}
+		}
+		if (next == -1 || next == current)
+			break;
+		current = next;
+		pathSync[pathSizeSync] = next;
+		pathSizeSync++;
+	}
+	// I don't know why this is necessary
+	pathSizeSync++;
 }

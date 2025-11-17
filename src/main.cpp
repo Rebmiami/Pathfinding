@@ -23,6 +23,7 @@ constexpr int WIDTH = 640;
 constexpr int HEIGHT = 480;
 
 static void mainloop();
+static void DrawPuzzlePath(int originX, int originY, int tileSize);
 
 int main() {
 	if (SDL_Init(SDL_INIT_EVERYTHING) > 0) {
@@ -87,7 +88,8 @@ static void mainloop() {
 	SDL_Color unexploredColor = {80, 80, 80, 255};
 	SDL_Color startColor = {0, 0, 255, 255};
 	SDL_Color endColor = {255, 0, 0, 255};
-	SDL_Color pathColor = {255, 0, 255, 255};
+	SDL_Color highlightColor = {255, 0, 255, 255};
+	SDL_Color pathColor = {0, 0, 200, 255};
 
 	for (int x = 0; x < puzzle->width; x++) {
 		for (int y = 0; y < puzzle->height; y++) {
@@ -113,7 +115,7 @@ static void mainloop() {
 			}
 
 			if (puzzle->highlighted[puzzle->GetBoundedIndex(x, y)]) {
-				borderColor = pathColor;
+				borderColor = highlightColor;
 				tileBorderSize = borderSizeFocused;
 			}
 
@@ -126,10 +128,32 @@ static void mainloop() {
 	  		SDL_SetRenderDrawColor(renderer, color.r, color.b, color.g, color.a);
 			SDL_RenderFillRect(renderer, &innerRect);
 
+			SDL_SetRenderDrawColor(renderer, pathColor.r, pathColor.b, pathColor.g, pathColor.a);
+			for (int i = -1; i < 1; i++)
+				for (int j = -1; j < 1; j++)
+					DrawPuzzlePath(originX + i, originY + j, tileSize);
+
 			DrawText(renderer, font, text.str(), tileX + tileSize / 2, tileY + tileSize / 2);
 	 	}
 	}
 
-
 	SDL_RenderPresent(renderer);
+	// Should prevent the race condition
+	puzzle->updatePathSync = true;
+}
+
+static void DrawPuzzlePath(int originX, int originY, int tileSize) {
+	SDL_Point buffer[puzzle->width * puzzle->height];
+	for (int i = 0; i < puzzle->pathSizeSync; i++) {
+		int v = puzzle->pathSync[i];
+		int indexX = puzzle->GetIndexX(v);
+		int indexY = puzzle->GetIndexY(v);
+
+		int tileX = originX + indexX * tileSize + tileSize / 2;
+		int tileY = originY + indexY * tileSize + tileSize / 2;
+
+		buffer[i] = {tileX, tileY};
+
+		SDL_RenderDrawLines(renderer, buffer, i);
+	}
 }

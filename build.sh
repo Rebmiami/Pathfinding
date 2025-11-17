@@ -1,6 +1,5 @@
 rm -rf bin
 mkdir bin
-# Borrowed from stackoverflow
-# https://stackoverflow.com/a/59621930
-g++ -O3 -g $(find src -type f -iregex ".*\.cpp") -o bin/main
-cp demos/* bin
+em++ -s USE_SDL=2 -s USE_SDL_TTF=2 $(find src -type f -iregex ".*\.cpp") -o bin/main.html --preload-file demos --preload-file assets
+cp -r demos bin
+cp -r assets bin

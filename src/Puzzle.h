@@ -2,7 +2,9 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <ratio>
 #include <stack>
+#include <string_view>
 #include <vector>
 #include "libs/nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -14,7 +16,29 @@ constexpr int NEIGHBOR_OFFSET_Y[NEIGHBOR_COUNT] = {1, 1, 0, -1, -1, -1, 0, 1};
 constexpr double WEIGHT_DIAGONAL = 1.414213562;
 constexpr double NEIGHBOR_COSTS[NEIGHBOR_COUNT] = {1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL};
 
-constexpr std::chrono::duration delayTime = std::chrono::milliseconds(1);
+constexpr int MAX_DELAY_TIME = 7;
+
+const std::string delayNames[] = {
+	"1 second",
+	"100 ms",
+	"10 ms",
+	"1 ms",
+	"0.1 ms",
+	"0.01 ms",
+	"0.001 ms",
+	"No delay",
+};
+
+constexpr std::chrono::duration<long, std::ratio<1, 1000000>> delayTimes[] = {
+	std::chrono::microseconds(1000000),
+	std::chrono::microseconds(100000),
+	std::chrono::microseconds(10000),
+	std::chrono::microseconds(1000),
+	std::chrono::microseconds(100),
+	std::chrono::microseconds(10),
+	std::chrono::microseconds(1),
+	std::chrono::microseconds(0),
+};
 
 struct Puzzle {
     int height;
@@ -32,6 +56,7 @@ struct Puzzle {
     int* path;
     int pathSize = 0;
     bool optimizeBruteForce = false;
+    int delayTime = 0;
 
     bool updatePathSync;
     int* pathSync;

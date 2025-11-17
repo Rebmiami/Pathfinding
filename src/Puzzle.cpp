@@ -81,7 +81,7 @@ double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int c
 		}
 		updatePathSync = false;
 	}
-	std::this_thread::sleep_for(delayTime);
+	std::this_thread::sleep_for(delayTimes[delayTime]);
 	highlighted[current] = false;
 	if (distances[current] == -1 || cost < distances[current])
 		distances[current] = cost;
@@ -148,7 +148,7 @@ void* Puzzle::CheapestPathGreedy(void* args) {
 
 			if (!puzzle->IsWall(nx, ny)) {
 				puzzle->highlighted[n] = true;
-				std::this_thread::sleep_for(delayTime);
+				std::this_thread::sleep_for(delayTimes[puzzle->delayTime]);
 				puzzle->highlighted[n] = false;
 				double newDistance = nextDist + NEIGHBOR_COSTS[i];
 				if (newDistance > puzzle->bestSoFar) {

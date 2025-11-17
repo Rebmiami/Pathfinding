@@ -111,10 +111,12 @@ static void mainloop() {
 				}
 				case Done: {
 					if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-						// TODO: Speed up
+						if (puzzle->delayTime < MAX_DELAY_TIME)
+							puzzle->delayTime++;
 					}
 					else if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-						// TODO: Slow down
+						if (puzzle->delayTime > 0)
+							puzzle->delayTime--;
 					}
 					break;
 				}
@@ -135,7 +137,22 @@ static void mainloop() {
 			DrawText(renderer, font, "3: Brute Force (optimized)", WIDTH / 2, 130);
 			break;
 		case Done: {
-			DrawText(renderer, font, "Accesses so far: " + std::to_string(puzzle->arrayAccesses), WIDTH / 2, 20);
+			if (puzzle->done) {
+				DrawText(renderer, font, "Finished in " + std::to_string(puzzle->arrayAccesses) + " array accesses", WIDTH / 2, 20);
+				if (puzzle->finalCost != -1)
+					DrawText(renderer, font, "Path cost: " + std::to_string(puzzle->finalCost), WIDTH / 2, 50);
+				else
+					DrawText(renderer, font, "Did not find a solution", WIDTH / 2, 50);
+				DrawText(renderer, font, "Reload page to try again", WIDTH / 2, HEIGHT - 20);
+			}
+			else {
+				DrawText(renderer, font, "Accesses so far: " + std::to_string(puzzle->arrayAccesses), WIDTH / 2, 20);
+				DrawText(renderer, font, "Delay between iterations: " + delayNames[puzzle->delayTime], WIDTH / 2, 50);
+				if (puzzle->delayTime > 0)
+					DrawText(renderer, font, "<", WIDTH / 2 - 200, 50);
+				if (puzzle->delayTime < MAX_DELAY_TIME)
+					DrawText(renderer, font, ">", WIDTH / 2 + 200, 50);
+			}
 
 			int tileSize = 50;
 			int borderSize = 2;

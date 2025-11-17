@@ -1,3 +1,4 @@
+#pragma once
 #include <array>
 #include <cmath>
 #include <vector>
@@ -24,6 +25,10 @@ struct Puzzle {
     double bestSoFar = -1;
 
     int arrayAccesses = 0;
+    // Used for animation
+    int iterationsPassed = 0;
+    int iterationBudget = 0;
+    double finalCost = -1;
 
     Puzzle(json demo);
     int GetBoundedIndex(int x, int y);
@@ -31,9 +36,9 @@ struct Puzzle {
     int GetIndexY(int index);
     bool IsWall(int x, int y);
     // Returns the length of the shortest path, calculated using the brute force approach
-    double CheapestPathBruteForce();
+    static void* CheapestPathBruteForce(void* arg);
     double CheapestPathBruteForceRecursive(std::vector<bool> explored, int current, double cost);
     // Returns the length of the shortest path, calculated using the greedy approach
-    double CheapestPathGreedy();
+    static void* CheapestPathGreedy(void* arg);
     void PrintDistances();
 };

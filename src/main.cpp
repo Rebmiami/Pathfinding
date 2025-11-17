@@ -1,5 +1,4 @@
-#include <exception>
-#include <iostream>
+#include <cstddef>
 #include <string>
 #include <fstream>
 #include "libs/nlohmann/json.hpp"
@@ -8,9 +7,14 @@ using json = nlohmann::json;
 #include <emscripten.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <pthread.h>
+#include "Text.h"
 
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
+Puzzle* puzzle;
+TTF_Font* font;
+pthread_t puzzleThread;
 
 constexpr int WIDTH = 640;
 constexpr int HEIGHT = 480;
@@ -39,39 +43,31 @@ int main() {
         return 0;
     }
 
-    emscripten_set_main_loop(mainloop, 0, false);
-
-    printf("Please input a filename to load a demo from: ");
+    TTF_Init();
+    font = TTF_OpenFont("assets/MozillaText-Regular.ttf", 20);
 
     std::string filename;
-    std::cin >> filename;
-
-    TTF_Font* font = TTF_OpenFont("./assets/MozillaText-Regular.ttf", 14);
+    filename = "demos/demo1.json";
+    // std::cin >> filename;
 
     std::ifstream jsonStream(filename);
     json demo = json::parse(jsonStream);
 
-    Puzzle bruteForce = Puzzle(demo);
-    double bruteForceCost = bruteForce.CheapestPathBruteForce();
-    if (bruteForceCost != -1)
-    	printf("Found shortest path of cost %.2f in %d array accesses using brute force approach.\n", bruteForceCost, bruteForce.arrayAccesses);
-    else
-    	printf("Could not find a valid path after %d array accesses using brute force approach.\n", bruteForce.arrayAccesses);
+    puzzle = new Puzzle(demo);
 
-    Puzzle greedy = Puzzle(demo);
-    double greedyCost = greedy.CheapestPathGreedy();
-    if (greedyCost != -1)
-    	printf("Found shortest path of cost %.2f in %d array accesses using greedy approach.\n", greedyCost, greedy.arrayAccesses);
-    else
-    	printf("Could not find a valid path after %d array accesses using greedy approach.\n", greedy.arrayAccesses);
-    greedy.PrintDistances();
+    // pthread_create(&puzzleThread, NULL, Puzzle::CheapestPathBruteForce, puzzle);
+
+    emscripten_set_main_loop(mainloop, 0, false);
 
     return 0;
 }
 
 static void mainloop() {
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(renderer, 16, 16, 16, 255);
     SDL_RenderClear(renderer);
+
+    DrawText(renderer, font, "Accesses so far: " + std::to_string(puzzle->arrayAccesses), 5, 5);
 
 	SDL_RenderPresent(renderer);
 }

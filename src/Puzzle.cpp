@@ -46,13 +46,15 @@ int Puzzle::GetIndexY(int index) {
 	return index / width;
 }
 
-double Puzzle::CheapestPathBruteForce() {
+void* Puzzle::CheapestPathBruteForce(void* args) {
+	Puzzle* puzzle = (Puzzle*)args;
 	std::vector<bool> explored;
-	for (int i = 0; i < width * height; i++) {
+	for (int i = 0; i < puzzle->width * puzzle->height; i++) {
 		explored.push_back(false);
 	}
 
-	return CheapestPathBruteForceRecursive(explored, GetBoundedIndex(startx, starty), 0);
+	puzzle->finalCost = puzzle->CheapestPathBruteForceRecursive(explored, puzzle->GetBoundedIndex(puzzle->startx, puzzle->starty), 0);
+	return 0;
 }
 
 double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int current, double cost) {
@@ -84,50 +86,55 @@ double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int c
 	return bestSolution;
 }
 
-double Puzzle::CheapestPathGreedy() {
+void* Puzzle::CheapestPathGreedy(void* args) {
+	Puzzle* puzzle = (Puzzle*)args;
+	std::vector<bool> explored = std::vector<bool>();
 	std::list<int> unvisited;
-	distances = new double[width * height];
+	puzzle->distances = new double[puzzle->width * puzzle->height];
 
-	for (int i = 0; i < width * height; i++) {
+	for (int i = 0; i < puzzle->width * puzzle->height; i++) {
 		// -1 is used here in place of infinity
-		distances[i] = -1;
+		puzzle->distances[i] = -1;
 		// Set the distance to the starting position to 0
-		if (GetBoundedIndex(startx, starty) == i)
-			distances[i] = 0;
+		if (puzzle->GetBoundedIndex(puzzle->startx, puzzle->starty) == i)
+			puzzle->distances[i] = 0;
 
 		unvisited.push_back(i);
+		explored[i] = false;
 	}
 
 	while (!unvisited.empty()) {
 		int next = -1;
 		double nextDist = -1;
 		for (int i : unvisited) {
-			if (distances[i] != -1 && (distances[i] < nextDist || nextDist == -1)) {
+			if (puzzle->distances[i] != -1 && (puzzle->distances[i] < nextDist || nextDist == -1)) {
 				next = i;
-				nextDist = distances[i];
+				nextDist = puzzle->distances[i];
 			}
 		}
 
-		if (next == -1 || next == GetBoundedIndex(endx, endy))
+		if (next == -1 || next == puzzle->GetBoundedIndex(puzzle->endx, puzzle->endy))
 			break;
 		unvisited.remove(next);
+		explored[next] = true;
 
 		for (int i = 0; i < NEIGHBOR_COUNT; i++) {
-			int x = GetIndexX(next);
-			int y = GetIndexY(next);
+			int x = puzzle->GetIndexX(next);
+			int y = puzzle->GetIndexY(next);
 			int nx = x + NEIGHBOR_OFFSET_X[i];
 			int ny = y + NEIGHBOR_OFFSET_Y[i];
-			int n = GetBoundedIndex(nx, ny);
+			int n = puzzle->GetBoundedIndex(nx, ny);
 
-			if (!IsWall(nx, ny)) {
+			if (!puzzle->IsWall(nx, ny)) {
 				double newDistance = nextDist + NEIGHBOR_COSTS[i];
-				if (distances[n] == -1 || newDistance < distances[n])
-					distances[n] = newDistance;
+				if (puzzle->distances[n] == -1 || newDistance < puzzle->distances[n])
+					puzzle->distances[n] = newDistance;
 			}
 		}
 	}
 
-	return distances[GetBoundedIndex(endx, endy)];
+	puzzle->finalCost = puzzle->distances[puzzle->GetBoundedIndex(puzzle->endx, puzzle->endy)];
+	return 0;
 }
 
 void Puzzle::PrintDistances() {

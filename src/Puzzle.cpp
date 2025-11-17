@@ -86,8 +86,8 @@ double Puzzle::CheapestPathBruteForceRecursive(std::vector<bool> explored, int c
 	if (distances[current] == -1 || cost < distances[current])
 		distances[current] = cost;
 	// Optimization: Give up on paths that are more expensive than the current best path
-	// if (bestSoFar != -1 && cost > bestSoFar)
-	// 	return -1;
+	if (optimizeBruteForce && bestSoFar != -1 && cost > bestSoFar)
+		return -1;
 	if (current == GetBoundedIndex(endx, endy)) {
 		if (bestSoFar == -1 || cost < bestSoFar)
 			bestSoFar = cost;

@@ -56,7 +56,7 @@ int main() {
 
 	puzzle = new Puzzle(demo);
 
-	pthread_create(&puzzleThread, NULL, Puzzle::CheapestPathBruteForce, puzzle);
+	pthread_create(&puzzleThread, NULL, Puzzle::CheapestPathGreedy, puzzle);
 
 	emscripten_set_main_loop(mainloop, 0, false);
 
@@ -82,11 +82,11 @@ static void mainloop() {
 
 	SDL_Color wallColor = {32, 32, 32, 255};
 	SDL_Color unexploredColor = {80, 80, 80, 255};
-	SDL_Color cheapColor = {0, 255, 0, 255};
+	SDL_Color cheapColor = {0, 0, 255, 255};
 	SDL_Color expensiveColor = {255, 0, 0, 255};
-	SDL_Color startColor = {0, 255, 0, 255};
+	SDL_Color startColor = {0, 0, 255, 255};
 	SDL_Color endColor = {255, 0, 0, 255};
-	SDL_Color pathColor = {255, 255, 0, 255};
+	SDL_Color pathColor = {255, 0, 255, 255};
 
 	for (int x = 0; x < puzzle->width; x++) {
 		for (int y = 0; y < puzzle->height; y++) {
@@ -97,15 +97,13 @@ static void mainloop() {
 			SDL_Rect innerRect = {tileX + tileBorderSize, tileY + tileBorderSize, tileSize - tileBorderSize * 2, tileSize - tileBorderSize * 2};
 
 			SDL_Color color;
-	 		SDL_Color borderColor;
+	 		SDL_Color borderColor = {16, 16, 16, 255};
 			std::stringstream text;
 			if (puzzle->walls[puzzle->GetBoundedIndex(x, y)] == -1) {
 				color = wallColor;
-				borderColor = wallColor;
 			}
 			else if (puzzle->distances[puzzle->GetBoundedIndex(x, y)] == -1) {
 				color = unexploredColor;
-				borderColor = unexploredColor;
 				text << "Inf.";
 			}
 			else {

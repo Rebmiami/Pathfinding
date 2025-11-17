@@ -1,7 +1,9 @@
 #include "Puzzle.h"
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <list>
+#include <thread>
 #include <vector>
 
 Puzzle::Puzzle(json demo) {
@@ -32,6 +34,7 @@ int Puzzle::GetBoundedIndex(int x, int y) {
 
 bool Puzzle::IsWall(int x, int y) {
 	arrayAccesses++;
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	int index = GetBoundedIndex(x, y);
 	if (index == -1)
 		return true;
@@ -100,7 +103,7 @@ void* Puzzle::CheapestPathGreedy(void* args) {
 			puzzle->distances[i] = 0;
 
 		unvisited.push_back(i);
-		explored[i] = false;
+		explored.push_back(false);
 	}
 
 	while (!unvisited.empty()) {

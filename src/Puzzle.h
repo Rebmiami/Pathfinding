@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
+#include <chrono>
 #include <cmath>
+#include <stack>
 #include <vector>
 #include "libs/nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -12,6 +14,8 @@ constexpr int NEIGHBOR_OFFSET_Y[NEIGHBOR_COUNT] = {1, 1, 0, -1, -1, -1, 0, 1};
 constexpr double WEIGHT_DIAGONAL = 1.414213562;
 constexpr double NEIGHBOR_COSTS[NEIGHBOR_COUNT] = {1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL, 1, WEIGHT_DIAGONAL};
 
+constexpr std::chrono::duration delayTime = std::chrono::milliseconds(100);
+
 struct Puzzle {
     int height;
     int width;
@@ -22,8 +26,9 @@ struct Puzzle {
 
     int* walls;
     double* distances;
-    bool* inPath;
+    bool* highlighted;
     double bestSoFar = -1;
+    std::stack<int>* path;
 
     int arrayAccesses = 0;
     // Used for animation

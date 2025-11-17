@@ -9,9 +9,9 @@ void DrawText(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, i
         return;
 
     SDL_Color fg = {255, 255, 255, 255};
-    SDL_Color bg = {0, 0, 0, 0};
+    // SDL_Color bg = {0, 0, 0, 0};
 
-    textSurface = TTF_RenderText_Shaded(font, text.c_str(), fg, bg);
+    textSurface = TTF_RenderText_Blended(font, text.c_str(), fg);
     textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
     textRect.x = x;

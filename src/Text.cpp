@@ -4,11 +4,13 @@ SDL_Surface* textSurface;
 SDL_Texture* textTexture;
 SDL_Rect textRect;
 
-void DrawText(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, int y) {
+void DrawText(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, int y, bool invert) {
 	if (text.length() == 0)
 		return;
 
 	SDL_Color fg = {255, 255, 255, 255};
+	if (invert)
+		fg = {0, 0, 0, 255};
 	SDL_Color bg = {0, 0, 0, 0};
 
 	textSurface = TTF_RenderText_Blended(font, text.c_str(), fg);

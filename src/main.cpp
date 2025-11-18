@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstdlib>
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -166,8 +167,8 @@ static void mainloop() {
 
 			SDL_Color wallColor = {32, 32, 32, 255};
 			SDL_Color unexploredColor = {80, 80, 80, 255};
-			SDL_Color startColor = {0, 0, 255, 255};
-			SDL_Color endColor = {255, 0, 0, 255};
+			SDL_Color startColor = {255, 0, 0, 255};
+			SDL_Color endColor = {0, 255, 0, 255};
 			SDL_Color highlightColor = {255, 0, 255, 255};
 			SDL_Color pathColor = {0, 0, 200, 255};
 
@@ -179,23 +180,28 @@ static void mainloop() {
 
 					SDL_Color color;
 			 		SDL_Color borderColor = {16, 16, 16, 255};
-					std::stringstream text;
 					if (puzzle->walls[puzzle->GetBoundedIndex(x, y)] == -1) {
 						color = wallColor;
 					}
 					else if (puzzle->distances[puzzle->GetBoundedIndex(x, y)] == -1) {
 						color = unexploredColor;
-						text << "Inf.";
 					}
 					else {
 						double distance = puzzle->distances[puzzle->GetBoundedIndex(x, y)];
 						double relativeDistance = distance / puzzle->bestSoFar;
 						color = colorMaps["plasma"].GetMap(relativeDistance);
-						text << std::setprecision(3) << puzzle->distances[puzzle->GetBoundedIndex(x, y)];
 					}
 
 					if (puzzle->highlighted[puzzle->GetBoundedIndex(x, y)]) {
 						borderColor = highlightColor;
+						tileBorderSize = borderSizeFocused;
+					}
+					else if (x == puzzle->startx && y == puzzle->starty) {
+						borderColor = startColor;
+						tileBorderSize = borderSizeFocused;
+					}
+					else if (x == puzzle->endx && y == puzzle->endy) {
+						borderColor = endColor;
 						tileBorderSize = borderSizeFocused;
 					}
 
@@ -207,15 +213,39 @@ static void mainloop() {
 
 			  		SDL_SetRenderDrawColor(renderer, color.r, color.b, color.g, color.a);
 					SDL_RenderFillRect(renderer, &innerRect);
-
-					SDL_SetRenderDrawColor(renderer, pathColor.r, pathColor.b, pathColor.g, pathColor.a);
-					for (int i = -1; i < 1; i++)
-						for (int j = -1; j < 1; j++)
-							DrawPuzzlePath(originX + i, originY + j, tileSize);
-
-					DrawText(renderer, font, text.str(), tileX + tileSize / 2, tileY + tileSize / 2);
 			 	}
 			}
+
+			SDL_SetRenderDrawColor(renderer, pathColor.r, pathColor.b, pathColor.g, pathColor.a);
+			for (int i = -2; i <= 2; i++)
+				for (int j = -2; j <= 2; j++)
+					if (abs(i) == 2 || abs(j) == 2)
+						DrawPuzzlePath(originX + i, originY + j, tileSize);
+
+			for (int x = 0; x < puzzle->width; x++) {
+				for (int y = 0; y < puzzle->height; y++) {
+					int tileBorderSize = borderSize;
+					int tileX = originX + x * tileSize;
+					int tileY = originY + y * tileSize;
+
+					bool invert = false;
+
+					std::stringstream text;
+					if (puzzle->walls[puzzle->GetBoundedIndex(x, y)] == -1) {
+					}
+					else if (puzzle->distances[puzzle->GetBoundedIndex(x, y)] == -1) {
+						text << "Inf.";
+					}
+					else {
+						if (puzzle->distances[puzzle->GetBoundedIndex(x, y)] / puzzle->bestSoFar > 0.9)
+							invert = true;
+						text << std::setprecision(3) << puzzle->distances[puzzle->GetBoundedIndex(x, y)];
+					}
+
+					DrawText(renderer, font, text.str(), tileX + tileSize / 2, tileY + tileSize / 2, invert);
+			 	}
+			}
+
 			// Should prevent the race condition
 			puzzle->updatePathSync = true;
 			break;
@@ -228,7 +258,7 @@ static void mainloop() {
 }
 
 static void DrawPuzzlePath(int originX, int originY, int tileSize) {
-	SDL_Point buffer[puzzle->width * puzzle->height];
+	SDL_Point* buffer = new SDL_Point[puzzle->width * puzzle->height]();
 	for (int i = 0; i < puzzle->pathSizeSync; i++) {
 		int v = puzzle->pathSync[i];
 		int indexX = puzzle->GetIndexX(v);
@@ -241,4 +271,5 @@ static void DrawPuzzlePath(int originX, int originY, int tileSize) {
 
 		SDL_RenderDrawLines(renderer, buffer, i);
 	}
+	delete[] buffer;
 }
